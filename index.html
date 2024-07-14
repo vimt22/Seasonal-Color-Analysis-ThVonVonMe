@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seasonal Color Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #ff5722;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .upload-section, .result-section {
+            margin: 2rem 0;
+            padding: 1rem;
+            border-radius: 10px;
+        }
+        .upload-section {
+            border: 2px dashed #ccc;
+            text-align: center;
+        }
+        .upload-section input[type="file"] {
+            display: none;
+        }
+        .upload-section label {
+            display: inline-block;
+            padding: 1rem 2rem;
+            border: 2px solid #ff5722;
+            border-radius: 5px;
+            background-color: #ff5722;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .result-section {
+            display: none;
+        }
+        .result-image {
+            width: 100%;
+            border-radius: 10px;
+        }
+        .seasonal-info {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        .seasonal-info h3 {
+            margin: 0.5rem 0;
+            font-size: 1.5rem;
+        }
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 5px;
+            margin-top: 1rem;
+        }
+        .color-box {
+            width: 100%;
+            padding-bottom: 100%;
+            border-radius: 5px;
+        }
+        .reset-button {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .reset-button:hover {
+            background-color: #d32f2f;
+        }
+        @media (max-width: 768px) {
+            header {
+                padding: 0.5rem;
+            }
+            .container {
+                padding: 1rem;
+            }
+            .upload-section, .result-section {
+                margin: 1rem 0;
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Seasonal Color Analysis</h1>
+    </header>
+    <div class="container">
+        <section class="upload-section">
+            <h2>Upload Your Selfie</h2>
+            <input type="file" id="imageInput" accept="image/*">
+            <label for="imageInput">Choose a Photo</label>
+            <button class="reset-button" id="resetButton" style="display: none;">Reset</button>
+        </section>
+        <section class="result-section" id="resultSection">
+            <h2>Your Color Analysis Result</h2>
+            <img id="resultImage" class="result-image" alt="Uploaded image will appear here">
+            <div class="seasonal-info">
+                <h3 id="seasonText">Season</h3>
+                <p id="bestColorsText">Best Colors: Warm, Dark, Contrast</p>
+            </div>
+            <div class="color-palette" id="colorPalette">
+                <!-- สีที่เหมาะสมจะถูกเพิ่มตรงนี้ -->
+            </div>
+        </section>
+    </div>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <script>
+        function getAverageColor(image) {
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = image.width;
+            canvas.height = image.height;
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            let r = 0, g = 0, b = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                r += data[i];
+                g += data[i + 1];
+                b += data[i + 2];
+            }
+            const pixelCount = data.length / 4;
+            r = Math.round(r / pixelCount);
+            g = Math.round(g / pixelCount);
+            b = Math.round(b / pixelCount);
+            return { r, g, b };
+        }
+
+        function determineSeasonalColor({ r, g, b }) {
+            // เพิ่มเงื่อนไขที่ละเอียดขึ้นในการวิเคราะห์สีตามฤดูกาล
+            const total = r + g + b;
+
+            if (r > g && r > b) {
+                if (g > b) {
+                    if (total > 500) {
+                        return { season: "Spring", bestColors: "Warm, Light, Clear" };
+                    } else {
+                        return { season: "Autumn", bestColors: "Warm, Dark, Rich" };
+                    }
+                } else {
+                    return { season: "Winter", bestColors: "Cool, Bright, High Contrast" };
+                }
+            } else if (g > r && g > b) {
+                return { season: "Summer", bestColors: "Cool, Light, Soft" };
+            } else if (b > r && b > g) {
+                return { season: "Winter", bestColors: "Cool, Dark, Clear" };
+            } else {
+                return { season: "Mixed Season", bestColors: "Neutral, Balanced" };
+            }
+        }
+
+        function getSeasonalPalette(season) {
+            const palettes = {
+                Winter: ["#f0f8ff", "#4682b4", "#5f9ea0", "#b0c4de", "#778899", "#708090"],
+                Spring: ["#ffebcd", "#ffb6c1", "#ffa07a", "#ff7f50", "#ffa500", "#ff6347"],
+                Summer: ["#afeeee", "#48d1cc", "#20b2aa", "#40e0d0", "#7fffd4", "#00ced1"],
+                Autumn: ["#ffdead", "#cd853f", "#d2691e", "#8b4513", "#a52a2a", "#800000"],
+                "Mixed Season": ["#d3d3d3", "#a9a9a9", "#696969", "#808080", "#2f4f4f", "#000000"]
+            };
+            return palettes[season] || palettes["Mixed Season"];
+        }
+
+        function displayPalette(palette) {
+            const colorPalette = document.getElementById('colorPalette');
+            colorPalette.innerHTML = '';
+            palette.forEach(color => {
+                const colorBox = document.createElement('div');
+                colorBox.className = 'color-box';
+                colorBox.style.backgroundColor = color;
+                colorPalette.appendChild(colorBox);
+            });
+        }
+
+        function resetForm() {
+            document.getElementById('imageInput').value = '';
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('resetButton').style.display = 'none';
+            document.getElementById('colorPalette').innerHTML = '';
+        }
+
+        document.getElementById('imageInput').addEventListener('change', function(event) {
+            var reader = new FileReader();
+            reader.onload = function() {
+                var resultImage = document.getElementById('resultImage');
+                resultImage.src = reader.result;
+                resultImage.onload = function() {
+                    var averageColor = getAverageColor(resultImage);
+                    var seasonData = determineSeasonalColor(averageColor);
+                    document.getElementById('seasonText').textContent = seasonData.season;
+                    document.getElementById('bestColorsText').textContent = `Best Colors: ${seasonData.bestColors}`;
+                    var palette = getSeasonalPalette(seasonData.season);
+                    displayPalette(palette);
+                    document.getElementById('resultSection').style.display = 'block';
+                    document.getElementById('resetButton').style.display = 'inline-block';
+                };
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        });
+
+        document.getElementById('resetButton').addEventListener('click', resetForm);
+    </script>
+</body>
+</html>
